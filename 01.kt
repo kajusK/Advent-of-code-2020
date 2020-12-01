@@ -25,7 +25,7 @@ fun findThree(nums: List<Int>): Int {
 }
 
 fun main(args: Array<String>) {
-    val nums = File("01.txt").readLines().map { it.toInt() }
+    val nums = File("inputs/01.txt").readLines().map { it.toInt() }
     println("Two items: ${findTwo(nums)}")
     println("Three items: ${findThree(nums)}")
 }
