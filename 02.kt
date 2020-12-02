@@ -4,8 +4,8 @@ fun policy1(lines: List<String>): Int {
     var valid = 0
 
     for (line in lines) {
-        val spl = line.split(Regex("-| |:"))
-        val count = spl[4].filter { it == spl[2][0].toChar() }.count()
+        val spl = line.replace(":", "").split("-", " ")
+        val count = spl[3].filter { it == spl[2][0] }.count()
         if (count >= spl[0].toInt() && count <= spl[1].toInt()) {
             valid++
         }
@@ -16,9 +16,9 @@ fun policy1(lines: List<String>): Int {
 fun policy2(lines: List<String>): Int {
     var valid = 0
     for (line in lines) {
-        val spl = line.split(Regex("-| |:"))
-        val first = spl[4][spl[0].toInt() - 1]
-        val second = spl[4][spl[1].toInt() - 1]
+        val spl = line.replace(":", "").split("-", " ")
+        val first = spl[3][spl[0].toInt() - 1]
+        val second = spl[3][spl[1].toInt() - 1]
         val char = spl[2][0]
         if ((first == char && second != char) || (first != char && second == char)) {
             valid++
