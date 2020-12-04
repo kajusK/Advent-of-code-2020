@@ -21,24 +21,24 @@ fun isValid(fields: Map<String, String>) : Boolean {
     val ecl = fields["ecl"] ?: return false
     val pid = fields["pid"] ?: return false
 
-    if (byr < 1920 || byr > 2002) {
+    if (byr !in 1920..2002) {
         return false
     }
-    if (iyr < 2010 || iyr > 2020) {
+    if (iyr !in 2010..2020) {
         return false
     }
-    if (eyr < 2020 || eyr > 2030) {
+    if (eyr !in 2020..2030) {
         return false
     }
 
     if (hgt.endsWith("in")) {
         val num = hgt.replace("in", "").toInt()
-        if (num < 59 || num > 76) {
+        if (num !in 59..76) {
             return false
         }
     } else if (hgt.endsWith("cm")) {
         val num = hgt.replace("cm", "").toInt()
-        if (num < 150 || num > 193) {
+        if (num !in 150..193) {
             return false
         }
     } else {
