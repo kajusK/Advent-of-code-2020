@@ -8,13 +8,15 @@ class Computer(var origInstructions: List<Pair<String, Int>>) {
     private fun runNext() {
         val instruction = instructions[pc].first
         val arg = instructions[pc].second
-        when (instruction) {
-            "nop" -> pc += 1
+        pc += when (instruction) {
+            "nop" -> 1
             "acc" -> {
                 acc +=  arg
-                pc += 1
+                1
             }
-            "jmp" -> pc += arg
+            "jmp" -> arg
+            else ->
+                error("Unexpected instruction")
         }
     }
 
