@@ -48,7 +48,6 @@ fun moveWaypoint(data: List<Pair<Char, Int>>) : Int {
     var wy = -1
     var x = 0
     var y = 0
-    var angle = 90
 
     data.forEach { (cmd, arg) ->
         when (cmd) {
