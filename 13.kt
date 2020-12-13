@@ -15,11 +15,13 @@ fun inverse(num: Long, modulo: Long) : Long {
 fun main() {
     val content = File("inputs/13.txt").readLines()
     val start = content[0].toInt()
-    val departures = content[1].split(',').map {
-        if (it == "x") 0L else it.toLong()
+    val departures = content[1].split(',').mapIndexed { i, id ->
+        id to i
+    }.filterNot { it.first == "x" }.map { (id, off) ->
+        id.toLong() to off
     }
 
-    val soonest = departures.filter { it != 0L }. map { it to it - start % it }.minBy { it.second }!!
+    val soonest = departures.map { it.first }.map { it to it - start % it }.minBy { it.second }!!
     println("Part 1: ${soonest.first * soonest.second}")
 
 
@@ -29,7 +31,7 @@ fun main() {
      * The equation for each id is: (t+off) mod id = 0
      * This can be simplified to: t mod id = - (off mod id) = id - (off mod id)
      */
-    val offsets = departures.mapIndexed { i, id -> if (id != 0L) id to id-(i % id) else 0L to 0L }.filter { it.first != 0L }
+    val offsets = departures.map { (id, off) -> id to id-(off % id) }
     val Z = offsets.map { it.first }.reduce { acc, id -> acc * id }
 
     /* Algorithm is taken from http://voho.eu/wiki/cinska-veta-o-zbytcich/ */
