@@ -31,55 +31,12 @@ fun getNewMask(addr: Int, mask: String): String {
     return res.reversed()
 }
 
-fun getVariants(mask: String): Int {
-    val res = mask.reversed().map { bit -> if (bit == 'X') 2 else 0 }
-    if (res.all { it == 0 }) {
-        return 1
+fun getAllAddresses(mask: String) : List<Long> {
+    if ('X' !in mask) {
+        return listOf(mask.toLong(2))
     }
-    return res.filterNot { it == 0 }.reduce { acc, value -> acc * value }
-}
-
-fun getSingleConflictsCount(mask: String, filter: String): Int {
-    val res = mask.mapIndexed { i, bit ->
-        when (bit) {
-            'X' -> if (filter[i] == 'X') 2 else 1
-            filter[i] -> 0
-            else -> if (filter[i] == 'X') 0 else return 0
-        }
-    }.filterNot { it == 0 }
-
-    if (res.count() == 0 || res.all { it == 2 }) {
-        /* filter is exactly same or filters all possible values */
-        return getVariants(mask)
-    }
-    return res.reduce { acc, i -> acc*i }
-}
-
-/* Count occurrences of the mask in already processed masks */
-fun getConflictsCount(mask: String, filters: List<String>): Int {
-    // remove all filters that do not apply on mask
-    val filtered = filters.filter { item ->
-        item.mapIndexed { i, v ->
-            !(v != mask[i] && v != 'X' && mask[i] != 'X')
-        }.all { it }
-    }
-    if (filtered.count() == 0) {
-        return 0
-    }
-    // merge filters together
-    var filter = filtered[0].toMutableList()
-    if (filtered.count() > 1) {
-        filtered.subList(1, filtered.count()).forEach { item ->
-            item.forEachIndexed { i, bit ->
-                filter[i] = when (bit) {
-                    filter[i] -> bit
-                    else -> 'X'
-                }
-            }
-        }
-    }
-    /* Make sure the data have common addresses */
-    return getSingleConflictsCount(mask, filter.joinToString(""))
+    val res = getAllAddresses(mask.replaceFirst('X', '1'))
+    return res + getAllAddresses(mask.replaceFirst('X', '0'))
 }
 
 fun part1(data: List<Pair<String, List<Pair<Int, Long>>>>) {
@@ -93,21 +50,16 @@ fun part1(data: List<Pair<String, List<Pair<Int, Long>>>>) {
 }
 
 fun part2(data: List<Pair<String, List<Pair<Int, Long>>>>) {
-    val addresses = mutableListOf<Pair<String, Long>>()
+    val mem = mutableMapOf<Long, Long>()
     data.forEach { (mask, payload) ->
-        addresses += payload.map { (addr, value) ->
-            getNewMask(addr, mask) to value
+        payload.forEach { (addr, value) ->
+            getAllAddresses(getNewMask(addr, mask)).forEach {
+                mem[it] = value
+            }
         }
     }
 
-    val masks = addresses.reversed().map { it.first }
-    /* loop backwards, last data will remain in memory */
-    val res = addresses.reversed().mapIndexed { i, (mask, value) ->
-        val variants = getVariants(mask) - getConflictsCount(mask, masks.subList(0, i))
-        variants*value
-    }.sum()
-
-    println("Part 2: $res")
+    println("Part 2: ${mem.values.sum()}")
 }
 
 fun main() {
