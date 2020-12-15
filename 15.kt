@@ -3,11 +3,8 @@ fun getResult(data: List<Int>, rounds: Int) : Int {
     var round = data.count() - 1
     val map = data.mapIndexed { i, v -> v to i+1 }.toMap().toMutableMap()
 
-    while (true) {
+    while (round != rounds - 1) {
         round++
-        if (round == rounds) {
-            return cur
-        }
         if (cur !in map) {
             map[cur] = round
             cur = 0
@@ -17,6 +14,7 @@ fun getResult(data: List<Int>, rounds: Int) : Int {
             cur = new
         }
     }
+    return cur
 }
 
 fun main() {
