@@ -1,11 +1,11 @@
 import java.io.File
 
 fun checkRules(part: List<String>, rules: Map<Int, List<List<String>>>, input: String): List<String>? {
-    if (input.count() == 0) {
+    if (input.isEmpty()) {
         return null
     }
-    if (part.count() == 1 && part[0].trim('"') in "a".."z") {
-        return if (input.first() ==  part[0].trim('"').first()) listOf(input.substring(1)) else null
+    if (part.size == 1 && part[0] in "a".."z") {
+        return if (input.first() == part[0].first()) listOf(input.substring(1)) else null
     }
 
     var data = listOf(input)
@@ -30,9 +30,9 @@ fun isValid(rules: Map<Int, List<List<String>>>, input: String): Boolean {
 fun main() {
     val spl = File("inputs/19.txt").readText().split("\n\n")
     var rules = spl[0].split('\n').map { line ->
-        val (id, rule) = line.split(':')
-        id.toInt() to rule.split('|').map { single ->
-            single.trim().split(' ').map { it.trim('"') }
+        val (id, rule) = line.split(": ")
+        id.toInt() to rule.split(" | ").map { single ->
+            single.split(' ').map { it.trim('"') }
         }
     }.toMap().toMutableMap()
 
