@@ -33,7 +33,7 @@ class Tile(val id: Long, var block: List<List<Char>>) {
     fun isValidOrientation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
         val dirs = listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1)
         dirs.forEach { dir ->
-            val neighborPos = pos.first + dir.first to pos.second + pos.second
+            val neighborPos = pos.first + dir.first to pos.second + dir.second
             image[neighborPos]?.let {
                 when (dir) {
                     -1 to 0 -> if (left != it.right) return false
