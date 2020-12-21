@@ -1,34 +1,36 @@
 import java.io.File
 import kotlin.math.sqrt
 
-class Tile(val id: Long, var block: List<List<Char>>, var orientation: Int = 0) {
+class Tile(val id: Long, var block: List<List<Char>>) {
+    var neighbors = listOf<Tile>()
+
     val top: String
-        get() = getBorder(0)
+        get() = block.first().joinToString("")
 
     val right: String
-        get() = getBorder(1)
+        get() = block.map { it.last() }.joinToString("")
 
     val bottom: String
-        get() = getBorder(2)
+        get() = block.last().joinToString("")
 
     val left: String
-        get() = getBorder(3)
+        get() = block.map { it.first() }.joinToString("")
 
-    val border by lazy {
-        val top = block.first().joinToString("")
-        val bottom = block.last().joinToString("")
-        val left = block.map { it.first() }.joinToString("")
-        val right = block.map { it.last() }.joinToString("")
-        listOf(top, right, bottom, left,
-            // flipped left to right
-            top.reversed(), left, bottom.reversed(), right,
-                // flipped to to bottom
-            bottom, right.reversed(), top, left.reversed())
+    fun rotate() {
+        block = block.mapIndexed { i, _ ->
+            block.map { row -> row.filterIndexed { j, _ -> j == i }}.flatten().reversed()
+        }
     }
 
-    private fun getBorder(dir: Int): String = border[(dir + orientation) % border.size]
+    fun vflip() {
+        block = block.map { it.reversed() }
+    }
 
-    fun isValidLocation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
+    fun hflip() {
+        block = block.reversed()
+    }
+
+    fun isValidOrientation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
         val dirs = listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1)
         dirs.forEach { dir ->
             val neighborPos = pos.first + dir.first to pos.second + pos.second
@@ -45,22 +47,63 @@ class Tile(val id: Long, var block: List<List<Char>>, var orientation: Int = 0) 
         return true
     }
 
-    // Test if any of the orientations of self can be matched with any orientation or the tile
-    fun isNeighbor(tile: Tile): Boolean {
-        return border.any { it in tile.border }
+    fun searchValidRotation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
+        if (isValidOrientation(pos, image)) return true
+        (0..2).forEach {
+            rotate()
+            if (isValidOrientation(pos, image)) return true
+        }
+        return false
+    }
+
+    fun isValidLocation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
+        if (searchValidRotation(pos, image)) return true
+        vflip()
+        if (searchValidRotation(pos, image)) return true
+        vflip()
+        hflip()
+        if (searchValidRotation(pos, image)) return true
+        return false
     }
 
     override fun equals(other: Any?): Boolean = (other is Tile) && id == other.id
-    fun copy(): Tile = Tile(id, block, orientation)
 }
 
-// find corner tiles
-fun findCorners(tiles: List<Tile>): List<Tile> {
-    return tiles.map { tile ->
-        tile to tiles.count { test ->
-            tile != test && tile.isNeighbor(test)
+fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
+    val dirs = listOf(-1 to 0, 1 to 0, 0 to 1, 0 to -1)
+    val map = mutableMapOf((0 to 0) to tiles.first())
+    val remaining = tiles.toMutableList()
+    remaining.remove(map[0 to 0])
+    val positions = dirs.toMutableList()
+    val repeated = mutableListOf<Pair<Int, Int>>()
+
+    while (positions.isNotEmpty()) {
+        val pos = positions.first()
+        positions.remove(pos)
+
+        val options = remaining.filter { it.isValidLocation(pos, map) }
+        if (options.isEmpty()) {
+            // found edge
+            continue
         }
-    }.filter { (_, cnt) -> cnt == 2 }.map { (tile, _) -> tile }
+        if (options.size > 1) {
+            // unable to decide now, put at the end of the search list
+            positions.add(pos)
+            if (pos in repeated) {
+                error("Infinite loop")
+            }
+            repeated.add(pos)
+            continue
+        }
+        map[pos] = options[0]
+        remaining.remove(options[0])
+        dirs.forEach { (x, y) ->
+            val newPos = pos.first + x to pos.second + y
+            if (newPos !in positions && newPos !in map) positions.add(newPos)
+        }
+    }
+
+    return map
 }
 
 fun main() {
@@ -71,10 +114,13 @@ fun main() {
         Tile(id, block)
     }
 
-    var map: Map<Pair<Int, Int>, Tile>? = null
-
-    println(tiles.first().border)
-
-    val corners = findCorners(tiles).map { it.id }.reduce { acc, l -> acc * l }
-    println("Part 1: $corners")
+    val map = genMap(tiles)
+    val positions = map.map { (key, _) -> key }.sortedBy { it.first*100 + it.second }
+    println(positions)
+    val edges = listOf(positions.first(), positions.last(),
+            positions.first().first to positions.last().second,
+            positions.last().first to positions.first().second)
+    println(edges.map { map[it]?.id })
+    val part1 = edges.map { map[it]!!.id }.reduce { acc, l -> acc * l }
+    println("Part1: $part1")
 }
