@@ -1,36 +1,27 @@
 import java.io.File
 
 fun main() {
-    val alergens = mutableMapOf<String, Set<String>>()
-    val foods = mutableSetOf<String>()
+    val allergens = mutableMapOf<String, Set<String>>()
 
-    val allFood = File("inputs/21.txt").readLines().map { line ->
+    val ingredients = File("inputs/21.txt").readLines().map { line ->
         val spl = line.split(" (")
         val ing = spl[0].split(' ').toSet()
         val algs = spl[1].removeSurrounding("contains ", ")").split(", ")
-        algs.forEach { al ->
-            if (al !in alergens) {
-                alergens[al] = ing
-            } else {
-                alergens[al] = alergens[al]!!.intersect(ing)
-            }
-        }
-        foods.addAll(ing)
+        algs.forEach { allergens[it] = if (it !in allergens) ing else allergens[it]!!.intersect(ing) }
         ing
     }.flatten()
 
-    val withoutAlergens = foods - alergens.values.flatten()
-    val part1 = allFood.filter { it in withoutAlergens }.size
-    println("Part 1: $part1")
+    val withoutAllergens = ingredients.toSet() - allergens.values.flatten()
+    println("Part 1: ${ingredients.filter { it in withoutAllergens }.size}")
 
     do {
-        val single = alergens.values.filter { it.size == 1 }.flatten()
-        alergens.forEach { (key, value) ->
+        val single = allergens.values.filter { it.size == 1 }.flatten()
+        allergens.forEach { (key, value) ->
             if (value.size != 1) {
-                alergens[key] = value - single
+                allergens[key] = value - single
             }
         }
-    } while (single.size != alergens.size)
+    } while (single.size != allergens.size)
 
-    println("Part 2: ${alergens.toList().sortedBy { (key, value) -> key }.map { (_, value) -> value.first() }.joinToString(",")}")
+    println("Part 2: ${allergens.toList().sortedBy { (key, value) -> key }.joinToString(",") { (_, value) -> value.first() }}")
 }
