@@ -1,21 +1,6 @@
 import java.io.File
-import kotlin.math.sqrt
 
-class Tile(val id: Long, var block: List<List<Char>>) {
-    var neighbors = listOf<Tile>()
-
-    val top: String
-        get() = block.first().joinToString("")
-
-    val right: String
-        get() = block.map { it.last() }.joinToString("")
-
-    val bottom: String
-        get() = block.last().joinToString("")
-
-    val left: String
-        get() = block.map { it.first() }.joinToString("")
-
+open class Block(var block: List<List<Char>>) {
     fun rotate() {
         block = block.mapIndexed { i, _ ->
             block.map { row -> row.filterIndexed { j, _ -> j == i }}.flatten().reversed()
@@ -29,6 +14,21 @@ class Tile(val id: Long, var block: List<List<Char>>) {
     fun hflip() {
         block = block.reversed()
     }
+}
+
+class Tile(val id: Long, block: List<List<Char>>) : Block(block) {
+    val top: String
+        get() = block.first().joinToString("")
+
+    val right: String
+        get() = block.map { it.last() }.joinToString("")
+
+    val bottom: String
+        get() = block.last().joinToString("")
+
+    val left: String
+        get() = block.map { it.first() }.joinToString("")
+
 
     fun isValidOrientation(pos: Pair<Int, Int>, image: Map<Pair<Int, Int>, Tile>): Boolean {
         val dirs = listOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1)
@@ -60,13 +60,49 @@ class Tile(val id: Long, var block: List<List<Char>>) {
         if (searchValidRotation(pos, image)) return true
         vflip()
         if (searchValidRotation(pos, image)) return true
-        vflip()
         hflip()
         if (searchValidRotation(pos, image)) return true
         return false
     }
 
-    override fun equals(other: Any?): Boolean = (other is Tile) && id == other.id
+    fun getUnbordered(): List<List<Char>> {
+        return block.subList(1, block.size - 1).map { it.subList(1, it.size - 1) }
+    }
+}
+
+class Image(block: List<List<Char>>) : Block(block) {
+    private fun countMonstersSingle(monster: List<List<Char>>) : Int {
+        var monsters = 0
+
+        for (y in 0..(block.size - monster.size)) {
+            for (x in 0..(block[0].size-monster[0].size)) {
+                val present = monster.mapIndexed { my, line ->
+                    line.mapIndexed { mx, c -> c == '.' || c == block[y + my][x + mx] }.all { it }
+                }.all { it }
+                if (present) monsters++
+            }
+        }
+        return monsters
+    }
+
+    private fun countMonstersRotated(monster: List<List<Char>>) : Int {
+        var monsters = countMonstersSingle(monster)
+        (0..2).forEach {
+            rotate()
+            monsters += countMonstersSingle(monster)
+        }
+        return monsters
+    }
+
+    fun countMonsters(monster: List<List<Char>>) : Int {
+        var monsters = countMonstersRotated(monster)
+        vflip()
+        monsters += countMonstersRotated(monster)
+        vflip()
+        hflip()
+        monsters += countMonstersRotated(monster)
+        return monsters
+    }
 }
 
 fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
@@ -75,7 +111,6 @@ fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
     val remaining = tiles.toMutableList()
     remaining.remove(map[0 to 0])
     val positions = dirs.toMutableList()
-    val repeated = mutableListOf<Pair<Int, Int>>()
 
     while (positions.isNotEmpty()) {
         val pos = positions.first()
@@ -89,10 +124,6 @@ fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
         if (options.size > 1) {
             // unable to decide now, put at the end of the search list
             positions.add(pos)
-            if (pos in repeated) {
-                error("Infinite loop")
-            }
-            repeated.add(pos)
             continue
         }
         map[pos] = options[0]
@@ -103,7 +134,12 @@ fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
         }
     }
 
+    println(remaining)
     return map
+}
+
+fun getRoughness(block: List<List<Char>>) : Int {
+    return block.map { it.filter { it == '#' }.size }.sum()
 }
 
 fun main() {
@@ -113,14 +149,30 @@ fun main() {
         val block = spl.subList(1, spl.size).map { it.toList() }
         Tile(id, block)
     }
+    val monster = File("inputs/20_monster.txt").readLines().map { it.toList() }
 
     val map = genMap(tiles)
-    val positions = map.map { (key, _) -> key }.sortedBy { it.first*100 + it.second }
-    println(positions)
+    var positions = map.map { (key, _) -> key }.sortedBy { it.second*100 + it.first }
     val edges = listOf(positions.first(), positions.last(),
             positions.first().first to positions.last().second,
             positions.last().first to positions.first().second)
-    println(edges.map { map[it]?.id })
     val part1 = edges.map { map[it]!!.id }.reduce { acc, l -> acc * l }
     println("Part1: $part1")
+
+    val startX = positions.first().first
+    val endX = positions.last().first
+    val startY = positions.first().second
+    val endY = positions.last().second
+    val block = mutableListOf<List<Char>>()
+
+    (startY..endY).reversed().forEach { y ->
+        val row = (startX..endX).map { x->
+            map[x to y]!!.getUnbordered() }.reduce { acc, l ->
+            acc.mapIndexed { i, v -> v + l[i] }
+        }
+        block.addAll(row)
+    }
+    val image = Image(block)
+    val monsters = image.countMonsters(monster)
+    println("Part2: ${getRoughness(image.block) - getRoughness(monster)*monsters}")
 }
