@@ -134,7 +134,6 @@ fun genMap(tiles: List<Tile>): Map<Pair<Int, Int>, Tile> {
         }
     }
 
-    println(remaining)
     return map
 }
 
