@@ -1,19 +1,13 @@
 import java.io.File
 
-fun MutableList<Int>.pop(): Int {
-    val res = this.first()
-    this.removeAt(0)
-    return res
-}
-
 fun getScore(decks: List<List<Int>>): Int {
     return decks.flatten().reversed().foldRightIndexed(0) { i, v, acc -> (i+1)*v + acc }
 }
 
 fun part1(decks: List<MutableList<Int>>) {
     while (decks[0].size > 0 && decks[1].size > 0) {
-        val pl1 = decks[0].pop()
-        val pl2 = decks[1].pop()
+        val pl1 = decks[0].removeFirst()
+        val pl2 = decks[1].removeFirst()
         val res = listOf(pl1, pl2).sorted().reversed()
         if (pl1 > pl2) {
             decks[0].addAll(res)
@@ -34,8 +28,8 @@ fun part2(decks: List<MutableList<Int>>): Int {
         }
         previous.add(decks.map { it.toList() })
 
-        val pl1 = decks[0].pop()
-        val pl2 = decks[1].pop()
+        val pl1 = decks[0].removeFirst()
+        val pl2 = decks[1].removeFirst()
         if (decks[0].size < pl1 || decks[1].size < pl2) {
             val res = listOf(pl1, pl2).sorted().reversed()
             if (pl1 > pl2) {
