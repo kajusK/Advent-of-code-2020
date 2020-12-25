@@ -76,7 +76,7 @@ fun solve(map: List<List<Int>>): Int {
 fun main() {
     var map = File("inputs/17.txt").readLines().mapIndexed { i, line ->
         line.mapIndexed { j, v -> listOf(i, j, 0, 0) to (v == ACTIVE) }.filter { it.second }.map { it.first }
-    }.reduce { acc, v -> acc + v }
+    }.flatten()
 
     println("Part 1: ${solve(map.map { it.subList(0, 3) })}")
     println("Part 2: ${solve(map)}")

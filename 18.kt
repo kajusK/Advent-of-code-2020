@@ -29,7 +29,7 @@ fun evaluate(input: String, solver: (String) -> Long): Long {
     var eq = input
     while ('(' in eq) {
         eq = eq.replace(Regex("""\([^\(\)]*\)""")) {
-            evaluate(it.value.trim('(').trim(')'), solver).toString()
+            evaluate(it.value.removeSurrounding("(", ")"), solver).toString()
         }
     }
     return solver(eq)
